@@ -1,0 +1,6 @@
+flask==2.1.3
+flask_session
+git+https://github.com/azure-samples/ms-identity-python-samples-common
+msal
+debugpy
+Werkzeug

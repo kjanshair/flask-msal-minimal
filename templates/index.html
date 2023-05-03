@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Index
+{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h5 class="card-header">
+        {% block header%} {% endblock %}
+    </h5>
+    <div class="card-body">
+        <p class="card-text">
+            {% block text %}
+            <h2 style="color: black;">{% print g.identity_context_data.authenticated %}</h2> 
+            {% endblock %}
+        </p>
+    </div>
+
+</div>
+{% endblock %}

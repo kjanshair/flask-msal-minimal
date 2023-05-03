@@ -1,0 +1,56 @@
+version: "3"
+
+services:
+  flask:
+    image: flask
+    container_name: flask
+    build: .
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=true
+    volumes:
+      - ./:/app
+    working_dir: /app
+    ports:
+      # - 5678:5678
+      - 5000:5000
+    command: flask run --host=0.0.0.0
+    # command: python -m debugpy --wait-for-client --listen 0.0.0.0:5678 -m flask run --host=0.0.0.0
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.flask.rule=Host(`remote-host`)
+      - traefik.http.routers.flask.entrypoints=websecure
+      - traefik.http.routers.flask.tls.certresolver=flask
+      - traefik.http.services.flask.loadbalancer.server.port=5000
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    environment:
+      # COMMON
+      - TRAEFIK_API_INSECURE=true
+      - TRAEFIK_PROVIDERS_DOCKER=true
+      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=true
+      # ENTRYPOINTS \ REDIRECTIONS
+      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
+      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
+      - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO=websecure
+      - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
+      - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_PERMANENT=true
+      # CERTIFICATES
+      - TRAEFIK_CERTIFICATESRESOLVERS_FLASK_ACME_TLSCHALLENGE=true
+      - TRAEFIK_CERTIFICATESRESOLVERS_FLASK_ACME_EMAIL=<acme-email>
+      - TRAEFIK_CERTIFICATESRESOLVERS_FLASK_ACME_STORAGE=/letsencrypt/acme.json
+    ports:
+      - 443:443
+      - 8080:8080
+      - 80:80
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  default:
+    name: isolated_network
+    external: true
